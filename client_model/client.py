@@ -5,7 +5,6 @@ import time
 import cv2
 import datetime
 import pandas
-import matplotlib.pyplot as plt
 from tkinter import *
 from PIL import ImageTk, Image
 from io import BytesIO
@@ -19,7 +18,7 @@ from multiprocessing import *
 DEFAULT_ENG_VALUE = 'null'
 DEFAULT_IMAGE_URI = "./static/images/profile_picture.png"  # default image into the video frame section
 DEFAULT_FPS_RATE = 10
-DEFAULT_PLAYBACK_RATE = 10
+# DEFAULT_PLAYBACK_RATE = 10
 
 ENCODING = "utf-8"
 
@@ -45,7 +44,7 @@ end_eng_label = ""
 timestamp_start = time.time()
 session_id = None
 fps = DEFAULT_FPS_RATE
-playback = DEFAULT_PLAYBACK_RATE
+# playback = DEFAULT_PLAYBACK_RATE
 starting_seq_size = 300
 message = None
 frame_counter = 0
@@ -63,14 +62,14 @@ master.state('zoomed')
 GUI = Graphics(master, q)
 
 
-@sio.event(namespace='/session')
+@sio.event(namespace=namespace)
 def connect():
-    print("Client connected")
     session_params = {'fps': fps, 'seq_size': starting_seq_size, 'input_type': 'webcam'}
-    sio.emit('check_session_id', session_params, namespace='/session')
+    sio.emit('check_session_id', session_params, namespace=namespace)
+    print("Client connected")
 
 
-@sio.event(namespace='/session')
+@sio.event(namespace=namespace)
 def check_session_id_response(data):
     global session_id
     session_id = data['session_id']
@@ -79,7 +78,7 @@ def check_session_id_response(data):
     q.put(client_ui.update_sio_and_sesh(sio, session_id))
 
 
-@sio.event(namespace='/session')
+@sio.event(namespace=namespace)
 def log_message(response):
     global message
     message = response
@@ -87,35 +86,32 @@ def log_message(response):
     print(response)
 
 
-@sio.event(namespace='/session')
+@sio.event(namespace=namespace)
 def output_data(data):
     global frame_counter, framearr, eng_data
-    frame_counter += 1
-    image_data = data['image_data'].split(",")[1].encode(ENCODING)
-    out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((500, 400), Image.ANTIALIAS)
-    out_image = ImageTk.PhotoImage(out_frame)
+    try:
+        image_data = data['image_data'].split(",")[1].encode(ENCODING)
+        out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((500, 400), Image.ANTIALIAS)
+        out_image = ImageTk.PhotoImage(out_frame)
+        q.put(GUI.update_image(out_image))
+        framearr.append(out_frame)
+        frame_counter += 1
+        if frame_counter == 1:
+            for key in data['eng_data']:
+                eng_data[key] = [data['eng_data'][key]]
+        else:
+            for key in data['eng_data']:
+                eng_data[key].append(data['eng_data'][key])
 
-    q.put(GUI.img_update(out_image))
+        q.put(GUI.update_aus(data['eng_data']))
 
-    framearr.append(out_frame)
-    if frame_counter == 1:
-        for key in data['eng_data']:
-            eng_data[key] = [data['eng_data'][key]]
-    else:
-        for key in data['eng_data']:
-            eng_data[key].append(data['eng_data'][key])
-
-    q.put(GUI.update_aus(data['eng_data']))
-    stop, num_frames = GUI.is_stopped_and_saveable()
-
-    if stop and num_frames == frame_counter:
-        frame_counter = 0
-        finalize_session()
-        framearr = []
-        eng_data = {}
+    except AttributeError:
+        print("Not a real image")
+    except RuntimeError:
+        print("GUI has been closed!")
 
 
-@sio.event(namespace='/session')
+@sio.event(namespace=namespace)
 def connect_error(data):
     print("The connection failed!")
 
@@ -144,14 +140,18 @@ def finalize_session():
         print("csv done")
 
 
-@sio.event(namespace='/session')
+@sio.event(namespace=namespace)
 def disconnect():
-    global ping_timeout_counter
+    global ping_timeout_counter, frame_counter, framearr, eng_data
+    frame_counter = 0
+    finalize_session()
+    framearr = []
+    eng_data = {}
     GUI.edit_log_message("INFO: Client disconnected.")
 
 
 def try_connect():
-    sio.connect('http://localhost:8083', namespaces=['/session'])
+    sio.connect('http://localhost:8083', namespaces=[namespace])
 
 
 def create_gui():

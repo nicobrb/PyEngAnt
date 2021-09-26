@@ -1,10 +1,9 @@
 import _queue
 import time
 import base64
-import tkinter
-
 import cv2
 import datetime
+import matplotlib.pyplot as plt
 from tkinter import *
 from tkinter import ttk, filedialog
 import tkinter.font as tkFont
@@ -17,17 +16,16 @@ sockio = None
 sesh_id = None
 pop = None
 t1 = None
+connected = False
 num_frames_sent = 0
 filename = "/"
 starting_img = Image.open("../images/profile_picture.png").resize((500, 400), Image.ANTIALIAS)
-SENTINEL = 'STOP'
 
 
 # TODO: save video before closing frame
 # TODO: save video if client disconnects
-
+# TODO: updating graph!
 def start_streaming(input_type, video_url):
-
     global ENCODING, sockio, sesh_id, num_frames_sent
     vc = None
     num_frames_sent = 0
@@ -65,14 +63,18 @@ def start_streaming(input_type, video_url):
 
 
 def update_sio_and_sesh(sio, ses_id):
-    global sockio, sesh_id
+    global sockio, sesh_id, connected
     sockio = sio
     sesh_id = ses_id
+    connected = True
 
 
 def start_analysis(final_input, video_url='0'):
     global stopped, t1
     stopped = False
+    if not connected:
+        sockio.connect('http://localhost:8083', namespaces=['/session'])
+
     t1 = Thread(target=start_streaming, args=(final_input, video_url))
     t1.start()
 
@@ -107,60 +109,64 @@ class Graphics:
         self.buttons_style = tkFont.Font(family="Segoe UI", size=15, weight='bold')
         self.ckbtn_style = tkFont.Font(family="Segoe UI", size=14)
 
-        root.configure(background='white')
-        root.columnconfigure(0, weight=1)
-        self.title = Label(root, text=' PyEngAnT', fg='white', bg='black', font=self.titles_style, anchor='w')
-        self.log_message = Label(root, text='INFO: Client disconnected', fg='white', bg='black',
+        self.root.configure(background='white')
+        self.root.columnconfigure(0, weight=1)
+        self.title = Label(self.root, text=' PyEngAnT', fg='white', bg='black', font=self.titles_style, anchor='w')
+        self.log_message = Label(self.root, text='INFO: Client disconnected', fg='white', bg='black',
                                  font=self.titles_style, anchor='e')
-        self.eng_ant_label = Label(root, text=' Engagement Analysis Tool', fg='black', bg='white',
+        self.eng_ant_label = Label(self.root, text=' Engagement Analysis Tool', fg='black', bg='white',
                                    font=self.titles_style, anchor='w')
 
-        self.AU_01_label = Label(root, text="AU 01 - Inner brow raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_02_label = Label(root, text="AU 02 - Outer brow raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_04_label = Label(root, text="AU 04 - Brow lowerer", fg='black', bg='white', font=self.lab_style)
-        self.AU_05_label = Label(root, text="AU 05 - Upper lid raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_06_label = Label(root, text="AU 06 - Cheek raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_07_label = Label(root, text="AU 07 - Lid tightener", fg='black', bg='white', font=self.lab_style)
-        self.AU_09_label = Label(root, text="AU 09 - Nose wrinkler", fg='black', bg='white', font=self.lab_style)
-        self.AU_10_label = Label(root, text="AU 10 - Upper lip raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_12_label = Label(root, text="AU 12 - Lip corner puller", fg='black', bg='white', font=self.lab_style)
-        self.AU_14_label = Label(root, text="AU 14 - Dimpler", fg='black', bg='white', font=self.lab_style)
-        self.AU_15_label = Label(root, text="AU 15 - Lip corner depressor", fg='black', bg='white', font=self.lab_style)
-        self.AU_17_label = Label(root, text="AU 17 - Chin raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_20_label = Label(root, text="AU 20 - Lip stretcher", fg='black', bg='white', font=self.lab_style)
-        self.AU_23_label = Label(root, text="AU 23 - Lip thightener", fg='black', bg='white', font=self.lab_style)
-        self.AU_25_label = Label(root, text="AU 25 - Lips part", fg='black', bg='white', font=self.lab_style)
-        self.AU_26_label = Label(root, text="AU 26 - Jaw drop", fg='black', bg='white', font=self.lab_style)
-        self.AU_45_label = Label(root, text="AU 45 - Blink", fg='black', bg='white', font=self.lab_style)
-        self.AU_28_label = Label(root, text="AU 28 - Lip suck", fg='black', bg='white', font=self.lab_style)
+        self.AU_01_label = Label(self.root, text="AU 01 - Inner brow raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_02_label = Label(self.root, text="AU 02 - Outer brow raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_04_label = Label(self.root, text="AU 04 - Brow lowerer", fg='black', bg='white', font=self.lab_style)
+        self.AU_05_label = Label(self.root, text="AU 05 - Upper lid raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_06_label = Label(self.root, text="AU 06 - Cheek raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_07_label = Label(self.root, text="AU 07 - Lid tightener", fg='black', bg='white', font=self.lab_style)
+        self.AU_09_label = Label(self.root, text="AU 09 - Nose wrinkler", fg='black', bg='white', font=self.lab_style)
+        self.AU_10_label = Label(self.root, text="AU 10 - Upper lip raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_12_label = Label(self.root, text="AU 12 - Lip corner puller", fg='black', bg='white', font=self.lab_style)
+        self.AU_14_label = Label(self.root, text="AU 14 - Dimpler", fg='black', bg='white', font=self.lab_style)
+        self.AU_15_label = Label(self.root, text="AU 15 - Lip corner depressor", fg='black', bg='white', font=self.lab_style)
+        self.AU_17_label = Label(self.root, text="AU 17 - Chin raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_20_label = Label(self.root, text="AU 20 - Lip stretcher", fg='black', bg='white', font=self.lab_style)
+        self.AU_23_label = Label(self.root, text="AU 23 - Lip thightener", fg='black', bg='white', font=self.lab_style)
+        self.AU_25_label = Label(self.root, text="AU 25 - Lips part", fg='black', bg='white', font=self.lab_style)
+        self.AU_26_label = Label(self.root, text="AU 26 - Jaw drop", fg='black', bg='white', font=self.lab_style)
+        self.AU_45_label = Label(self.root, text="AU 45 - Blink", fg='black', bg='white', font=self.lab_style)
+        self.AU_28_label = Label(self.root, text="AU 28 - Lip suck", fg='black', bg='white', font=self.lab_style)
 
-        self.start_button = Button(root, text='Start Analysis', fg='white', bg='blue', font=self.buttons_style,
-                                   command=self.cam_or_video)
-        self.stop_button = Button(root, text='Stop Analysis', fg='white', bg='red', font=self.buttons_style,
-                                  command=self.stop_analysis)
-        self.save_video_ckbtn = Checkbutton(root, text='Save Video', bg='white', font=self.ckbtn_style,
+        self.btn_frame = Frame(self.root, bg='white')
+        self.ckbtn_frame = Frame(self.btn_frame, bg='white')
+
+        self.start_button = Button(self.btn_frame, text='Start Analysis', fg='white', bg='blue',
+                                   font=self.buttons_style, command=self.cam_or_video)
+        self.stop_button = Button(self.btn_frame, text='Stop Analysis', fg='white', bg='red',
+                                  font=self.buttons_style, command=self.stop_analysis)
+
+        self.save_video_ckbtn = Checkbutton(self.ckbtn_frame, text='Save Video', bg='white', font=self.ckbtn_style,
                                             variable=self.save_video, onvalue=True, offvalue=False)
-        self.save_CSV_ckbtn = Checkbutton(root, text='Save CSV', bg='white', font=self.ckbtn_style,
+        self.save_CSV_ckbtn = Checkbutton(self.ckbtn_frame, text='Save CSV', bg='white', font=self.ckbtn_style,
                                           variable=self.save_CSV, onvalue=True, offvalue=False)
 
-        self.prog_AU_01 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_02 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_04 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_05 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_06 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_07 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_09 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_10 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_12 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_14 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_15 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_17 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_20 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_23 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_25 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_26 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_45 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_28 = ttk.Progressbar(root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_01 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_02 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_04 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_05 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_06 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_07 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_09 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_10 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_12 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_14 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_15 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_17 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_20 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_23 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_25 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_26 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_45 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_28 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
 
         self.AUs_bars_dict = {'AU01_r': self.prog_AU_01, 'AU02_r': self.prog_AU_02, 'AU04_r': self.prog_AU_04,
                               'AU05_r': self.prog_AU_05, 'AU06_r': self.prog_AU_06, 'AU07_r': self.prog_AU_07,
@@ -177,25 +183,29 @@ class Graphics:
                                 'AU26_r': self.AU_26_label, 'AU45_r': self.AU_45_label, 'AU28_c': self.AU_28_label}
 
         self.default_image = ImageTk.PhotoImage(starting_img)
-        self.img_canvas = Label(image=self.default_image, anchor='w')
+        self.img_canvas = Label(image=self.default_image, anchor='center')
+        self.eng_chart = Label(image=self.default_image, anchor='center')
 
         self.title.grid(row=0, column=0, columnspan=6, sticky='ew')
         self.eng_ant_label.grid(row=1, column=0, columnspan=2, sticky='ew')
-        self.img_canvas.grid(row=2, column=0, rowspan=6, columnspan=2, padx=10, sticky='nsew')
+        self.img_canvas.grid(row=2, column=0, rowspan=8, columnspan=3, padx=10, sticky='w')
+        self.eng_chart.grid(row=8, column=4, rowspan=5, columnspan=4, sticky='nsew', pady=40)
         self.log_message.grid(row=0, column=6, columnspan=3, sticky='ew')
 
-        self.start_button.grid(row=9, column=0, pady=10, padx=10, sticky='w')
-        self.stop_button.grid(row=9, column=1, padx=10, sticky='w')
-        self.save_video_ckbtn.grid(row=10, column=0, padx=10, sticky='w')
-        self.save_CSV_ckbtn.grid(row=11, column=0, padx=10, sticky='w')
+        self.btn_frame.grid(row=10, column=0, columnspan=3, sticky='nsew')
+        self.start_button.pack(side=LEFT, padx=10, pady=10)
+        self.ckbtn_frame.pack(side=LEFT, padx=10, pady=10)
+        self.stop_button.pack(side=LEFT, padx=10, pady=10)
+        self.save_video_ckbtn.pack(side=BOTTOM)
+        self.save_CSV_ckbtn.pack(side=BOTTOM)
 
-        row = 1
-        col = 2
+        row = 2
+        col = 3
         for key in self.AUs_bars_dict:
             self.AUs_labels_dict[key].grid(row=row, column=col, padx=10)
             self.AUs_bars_dict[key].grid(row=(row + 1), column=col, padx=10)
-            if col == 7 and row < 8:
-                col = 2
+            if col == 8 and row < 9:
+                col = 3
                 row += 2
             else:
                 col += 1
@@ -214,9 +224,9 @@ class Graphics:
         self.img_canvas.configure(image=self.default_image)
         self.img_canvas.image = self.default_image
 
-    def img_update(self, new_frame):
+    def update_image(self, new_frame):
         if not stopped:
-            self.img_canvas.configure(image=new_frame)
+            self.img_canvas.configure(image=new_frame, anchor='w')
             self.img_canvas.image = new_frame
         else:
             return
@@ -244,11 +254,13 @@ class Graphics:
                     break
 
     def stop_analysis(self):
-        global stopped
-        stopped = True
-        self.set_initial_pic()
-        self.reset_aus()
-        self.queue.put(SENTINEL)
+        global stopped, connected
+        if not stopped:
+            stopped = True
+            sockio.emit('client_disconnect_request', namespace='/session')
+            connected = False
+            self.set_initial_pic()
+            self.reset_aus()
 
     def cam_or_video(self):
 
