@@ -1,15 +1,16 @@
-import numpy as np
+import client_ui
 import socketio
 import base64
 import time
 import cv2
 import datetime
 import pandas
+import numpy as np
 from tkinter import *
 from PIL import ImageTk, Image
 from io import BytesIO
 from client_ui import Graphics
-import client_ui
+from socketio import exceptions
 from multiprocessing import *
 
 
@@ -93,9 +94,10 @@ def output_data(data):
         image_data = data['image_data'].split(",")[1].encode(ENCODING)
         out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((500, 400), Image.ANTIALIAS)
         out_image = ImageTk.PhotoImage(out_frame)
-        q.put(GUI.update_image(out_image))
-        framearr.append(out_frame)
         frame_counter += 1
+        q.put(GUI.update_frame_and_chart(out_image, data['eng_data']['eng_val'], frame_counter))
+        framearr.append(out_frame)
+
         if frame_counter == 1:
             for key in data['eng_data']:
                 eng_data[key] = [data['eng_data'][key]]
@@ -105,14 +107,12 @@ def output_data(data):
 
         q.put(GUI.update_aus(data['eng_data']))
 
-    except AttributeError:
-        print("Not a real image")
     except RuntimeError:
         print("GUI has been closed!")
 
 
 @sio.event(namespace=namespace)
-def connect_error(data):
+def connect_error():
     print("The connection failed!")
 
 
@@ -151,7 +151,10 @@ def disconnect():
 
 
 def try_connect():
-    sio.connect('http://localhost:8083', namespaces=[namespace])
+    try:
+        sio.connect('http://localhost:8083', namespaces=[namespace])
+    except exceptions.ConnectionError as e:
+        print(e)
 
 
 def create_gui():
@@ -161,4 +164,3 @@ def create_gui():
 if __name__ == "__main__":
     t1 = Process(target=try_connect(), args=(q,))
     create_gui()
-
