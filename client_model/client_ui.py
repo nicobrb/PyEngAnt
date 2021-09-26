@@ -3,7 +3,8 @@ import time
 import base64
 import cv2
 import datetime
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import *
 from tkinter import ttk, filedialog
 import tkinter.font as tkFont
@@ -17,28 +18,30 @@ sesh_id = None
 pop = None
 t1 = None
 connected = False
+input_type = None
 num_frames_sent = 0
 filename = "/"
 starting_img = Image.open("../images/profile_picture.png").resize((500, 400), Image.ANTIALIAS)
+temp_chart = Figure(figsize=(5, 5), dpi=100)
+temp_chart.add_subplot(111).plot(range(1),range(1))
 
 
 # TODO: save video/csv before closing frame if user checked the boxes
-# TODO: updating graph!
 
-def start_streaming(input_type, video_url):
+def start_streaming(tipo_input, video_url):
     global ENCODING, sockio, sesh_id, num_frames_sent
     vc = None
     num_frames_sent = 0
-    if input_type == "webcam":
+    if tipo_input == "webcam":
         vc = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    elif input_type == "video":
+    elif tipo_input == "video":
         vc = cv2.VideoCapture(video_url)
     else:
         print("ERROR: choose the correct format of video file input.")
 
-    if not vc.isOpened() and input_type == 'webcam':
+    if not vc.isOpened() and tipo_input == 'webcam':
         raise IOError("Cannot open webcam")
-    elif not vc.isOpened() and input_type == 'video':
+    elif not vc.isOpened() and tipo_input == 'video':
         raise IOError("Cannot open video, maybe it does not exist")
 
     while True:
@@ -70,7 +73,7 @@ def update_sio_and_sesh(sio, ses_id):
 
 
 def start_analysis(final_input, video_url='0'):
-    global stopped, t1
+    global stopped, t1, temp_chart
     stopped = False
     if not connected:
         sockio.connect('http://localhost:8083', namespaces=['/session'])
@@ -80,19 +83,19 @@ def start_analysis(final_input, video_url='0'):
 
 
 def define(tipo_input):
-    global filename
+    global filename, input_type
     pop.destroy()
-
-    if tipo_input == 'video':
+    input_type = tipo_input
+    if input_type == 'video':
         filename = filedialog.askopenfilename(initialdir=filename,
                                               title='select a video',
                                               filetypes=(("mp4 files", "*.mp4"), ("all files", "*.*"),))
         if filename.endswith('.mp4'):
-            start_analysis(tipo_input, filename)
+            start_analysis(input_type, filename)
         else:
             print("No video returned")
     else:
-        start_analysis(tipo_input)
+        start_analysis(input_type)
 
 
 class Graphics:
@@ -102,6 +105,7 @@ class Graphics:
         self.root = root
         self.save_video = BooleanVar()
         self.save_CSV = BooleanVar()
+        self.eng_vals = []
 
         self.root.title('PyEngAnt')
         self.titles_style = tkFont.Font(family="Segoe UI", size=25)
@@ -138,6 +142,11 @@ class Graphics:
 
         self.btn_frame = Frame(self.root, bg='white')
         self.ckbtn_frame = Frame(self.btn_frame, bg='white')
+        self.chart_frame = Frame(self.root, bg='white')
+
+        chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
+        chart_canvas.draw()
+        chart_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
 
         self.start_button = Button(self.btn_frame, text='Start Analysis', fg='white', bg='blue',
                                    font=self.buttons_style, command=self.cam_or_video)
@@ -184,14 +193,13 @@ class Graphics:
 
         self.default_image = ImageTk.PhotoImage(starting_img)
         self.img_canvas = Label(image=self.default_image, anchor='center')
-        self.eng_chart = Label(image=self.default_image, anchor='center')
 
         self.title.grid(row=0, column=0, columnspan=6, sticky='ew')
         self.eng_ant_label.grid(row=1, column=0, columnspan=2, sticky='ew')
         self.img_canvas.grid(row=2, column=0, rowspan=8, columnspan=3, padx=10, sticky='w')
-        self.eng_chart.grid(row=8, column=4, rowspan=5, columnspan=4, sticky='nsew', pady=40)
         self.log_message.grid(row=0, column=6, columnspan=3, sticky='ew')
 
+        self.chart_frame.grid(row=9, column=3, rowspan=4, columnspan=6, sticky='nsew', pady=10)
         self.btn_frame.grid(row=10, column=0, columnspan=3, sticky='nsew')
         self.start_button.pack(side=LEFT, padx=10, pady=10)
         self.ckbtn_frame.pack(side=LEFT, padx=10, pady=10)
@@ -202,8 +210,8 @@ class Graphics:
         row = 2
         col = 3
         for key in self.AUs_bars_dict:
-            self.AUs_labels_dict[key].grid(row=row, column=col, padx=10)
-            self.AUs_bars_dict[key].grid(row=(row + 1), column=col, padx=10)
+            self.AUs_labels_dict[key].grid(row=row, column=col, pady=5, padx=10)
+            self.AUs_bars_dict[key].grid(row=(row + 1), column=col, pady=5, padx=10)
             if col == 8 and row < 9:
                 col = 3
                 row += 2
@@ -224,10 +232,24 @@ class Graphics:
         self.img_canvas.configure(image=self.default_image)
         self.img_canvas.image = self.default_image
 
-    def update_image(self, new_frame):
+    def update_frame_and_chart(self, latest_frame, latest_eng_value, num_frame):
+        global temp_chart
         if not stopped:
-            self.img_canvas.configure(image=new_frame, anchor='w')
-            self.img_canvas.image = new_frame
+            self.img_canvas.configure(image=latest_frame, anchor='w')
+            self.img_canvas.image = latest_frame
+            if latest_eng_value is not None:
+                self.eng_vals.append(latest_eng_value/100)
+            else:
+                self.eng_vals.append(0.0)
+
+            if num_frame >= 300 and num_frame % 50 == 0:
+                temp_chart = Figure(figsize=(5,5), dpi=100)
+                temp_chart.add_subplot(111).plot(range(num_frame), self.eng_vals)
+                for chart in self.chart_frame.winfo_children():
+                    chart.destroy()
+                chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
+                chart_canvas.draw()
+                chart_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
         else:
             return
 
@@ -254,10 +276,13 @@ class Graphics:
                     break
 
     def stop_analysis(self):
-        global stopped, connected
+        global stopped, connected, input_type
         if not stopped:
             stopped = True
-            sockio.emit('client_disconnect_request', namespace='/session')
+            if input_type == 'webcam':
+                sockio.emit('client_disconnect_request', namespace='/session')
+            elif input_type == 'video':
+                sockio.emit('client_video_end_disconnect_request', namespace='/session')
             connected = False
             self.set_initial_pic()
             self.reset_aus()
