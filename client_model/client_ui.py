@@ -22,9 +22,9 @@ filename = "/"
 starting_img = Image.open("../images/profile_picture.png").resize((500, 400), Image.ANTIALIAS)
 
 
-# TODO: save video before closing frame
-# TODO: save video if client disconnects
+# TODO: save video/csv before closing frame if user checked the boxes
 # TODO: updating graph!
+
 def start_streaming(input_type, video_url):
     global ENCODING, sockio, sesh_id, num_frames_sent
     vc = None
