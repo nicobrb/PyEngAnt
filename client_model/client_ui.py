@@ -23,7 +23,7 @@ num_frames_sent = 0
 filename = "/"
 starting_img = Image.open("../images/profile_picture.png").resize((500, 400), Image.ANTIALIAS)
 temp_chart = Figure(figsize=(5, 5), dpi=100)
-temp_chart.add_subplot(111).plot(range(1),range(1))
+temp_chart.add_subplot(111).plot(range(1), range(1))
 
 
 # TODO: save video/csv before closing frame if user checked the boxes
@@ -121,17 +121,23 @@ class Graphics:
         self.eng_ant_label = Label(self.root, text=' Engagement Analysis Tool', fg='black', bg='white',
                                    font=self.titles_style, anchor='w')
 
-        self.AU_01_label = Label(self.root, text="AU 01 - Inner brow raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_02_label = Label(self.root, text="AU 02 - Outer brow raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_01_label = Label(self.root, text="AU 01 - Inner brow raiser", fg='black', bg='white',
+                                 font=self.lab_style)
+        self.AU_02_label = Label(self.root, text="AU 02 - Outer brow raiser", fg='black', bg='white',
+                                 font=self.lab_style)
         self.AU_04_label = Label(self.root, text="AU 04 - Brow lowerer", fg='black', bg='white', font=self.lab_style)
-        self.AU_05_label = Label(self.root, text="AU 05 - Upper lid raiser", fg='black', bg='white', font=self.lab_style)
+        self.AU_05_label = Label(self.root, text="AU 05 - Upper lid raiser", fg='black', bg='white',
+                                 font=self.lab_style)
         self.AU_06_label = Label(self.root, text="AU 06 - Cheek raiser", fg='black', bg='white', font=self.lab_style)
         self.AU_07_label = Label(self.root, text="AU 07 - Lid tightener", fg='black', bg='white', font=self.lab_style)
         self.AU_09_label = Label(self.root, text="AU 09 - Nose wrinkler", fg='black', bg='white', font=self.lab_style)
-        self.AU_10_label = Label(self.root, text="AU 10 - Upper lip raiser", fg='black', bg='white', font=self.lab_style)
-        self.AU_12_label = Label(self.root, text="AU 12 - Lip corner puller", fg='black', bg='white', font=self.lab_style)
+        self.AU_10_label = Label(self.root, text="AU 10 - Upper lip raiser", fg='black', bg='white',
+                                 font=self.lab_style)
+        self.AU_12_label = Label(self.root, text="AU 12 - Lip corner puller", fg='black', bg='white',
+                                 font=self.lab_style)
         self.AU_14_label = Label(self.root, text="AU 14 - Dimpler", fg='black', bg='white', font=self.lab_style)
-        self.AU_15_label = Label(self.root, text="AU 15 - Lip corner depressor", fg='black', bg='white', font=self.lab_style)
+        self.AU_15_label = Label(self.root, text="AU 15 - Lip corner depressor", fg='black', bg='white',
+                                 font=self.lab_style)
         self.AU_17_label = Label(self.root, text="AU 17 - Chin raiser", fg='black', bg='white', font=self.lab_style)
         self.AU_20_label = Label(self.root, text="AU 20 - Lip stretcher", fg='black', bg='white', font=self.lab_style)
         self.AU_23_label = Label(self.root, text="AU 23 - Lip thightener", fg='black', bg='white', font=self.lab_style)
@@ -238,12 +244,12 @@ class Graphics:
             self.img_canvas.configure(image=latest_frame, anchor='w')
             self.img_canvas.image = latest_frame
             if latest_eng_value is not None:
-                self.eng_vals.append(latest_eng_value/100)
+                self.eng_vals.append(latest_eng_value / 100)
             else:
                 self.eng_vals.append(0.0)
 
             if num_frame >= 300 and num_frame % 50 == 0:
-                temp_chart = Figure(figsize=(5,5), dpi=100)
+                temp_chart = Figure(figsize=(5, 5), dpi=100)
                 temp_chart.add_subplot(111).plot(range(num_frame), self.eng_vals)
                 for chart in self.chart_frame.winfo_children():
                     chart.destroy()

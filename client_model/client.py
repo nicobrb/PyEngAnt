@@ -90,25 +90,28 @@ def log_message(response):
 @sio.event(namespace=namespace)
 def output_data(data):
     global frame_counter, framearr, eng_data
-    try:
-        image_data = data['image_data'].split(",")[1].encode(ENCODING)
-        out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((500, 400), Image.ANTIALIAS)
-        out_image = ImageTk.PhotoImage(out_frame)
-        frame_counter += 1
-        q.put(GUI.update_frame_and_chart(out_image, data['eng_data']['eng_val'], frame_counter))
-        framearr.append(out_frame)
+    if data['open_id'] == session_id:
+        try:
+            image_data = data['image_data'].split(",")[1].encode(ENCODING)
+            out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((500, 400), Image.ANTIALIAS)
+            out_image = ImageTk.PhotoImage(out_frame)
+            frame_counter += 1
+            q.put(GUI.update_frame_and_chart(out_image, data['eng_data']['eng_val'], frame_counter))
+            framearr.append(out_frame)
 
-        if frame_counter == 1:
-            for key in data['eng_data']:
-                eng_data[key] = [data['eng_data'][key]]
-        else:
-            for key in data['eng_data']:
-                eng_data[key].append(data['eng_data'][key])
+            if frame_counter == 1:
+                for key in data['eng_data']:
+                    eng_data[key] = [data['eng_data'][key]]
+            else:
+                for key in data['eng_data']:
+                    eng_data[key].append(data['eng_data'][key])
 
-        q.put(GUI.update_aus(data['eng_data']))
+            q.put(GUI.update_aus(data['eng_data']))
 
-    except RuntimeError:
-        print("GUI has been closed!")
+        except RuntimeError:
+            print("GUI has been closed!")
+    else:
+        print("frame from another session received. Discarding...")
 
 
 @sio.event(namespace=namespace)
