@@ -27,6 +27,9 @@ temp_chart.add_subplot(111).plot(range(1), range(1))
 
 
 # TODO: save video/csv before closing frame if user checked the boxes
+# TODO: popup if client is not connected
+# TODO: engagement popup as user stops analysis
+# TODO: legend for analysis chart
 
 def start_streaming(tipo_input, video_url):
     global ENCODING, sockio, sesh_id, num_frames_sent
