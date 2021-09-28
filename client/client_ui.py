@@ -1,5 +1,4 @@
 import _queue
-import math
 import time
 import base64
 import cv2
@@ -7,7 +6,7 @@ import datetime
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import *
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 import tkinter.font as tkFont
 from PIL import ImageTk, Image
 from threading import Thread
@@ -29,8 +28,6 @@ temp_chart = Figure(figsize=(5, 5), dpi=100)
 temp_chart.add_subplot(111).plot(range(1), range(1))
 
 
-# TODO: save video/csv before closing frame if user checked the boxes
-# TODO: popup if client is not connected
 # TODO: legend for analysis chart
 
 def start_streaming(tipo_input, video_url):
@@ -119,6 +116,7 @@ class Graphics:
         self.frames_array = []
 
         self.root.title('PyEngAnt')
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.titles_style = tkFont.Font(family="Segoe UI", size=25)
         self.results_style = tkFont.Font(family="Segoe UI", size=18)
         self.lab_style = tkFont.Font(family="Segoe UI", size=10)
@@ -292,7 +290,7 @@ class Graphics:
                     self.reset_aus()
                     break
 
-    def stop_analysis(self):
+    def stop_analysis(self, from_on_close=False):
         global stopped, connected, input_type
         if not stopped:
             stopped = True
@@ -301,22 +299,23 @@ class Graphics:
             elif input_type == 'video':
                 sockio.emit('client_video_end_disconnect_request', namespace='/session')
             connected = False
-            self.set_initial_pic()
-            self.reset_aus()
-            if not len(self.eng_vals) > 0:
-                self.final_eng("Not much datas for analysis")
-            else:
-                engagement = self.eng_vals[-1]
-                if 0 < engagement <= 0.25:
-                    eng_string = 'Not Engaged'
-                elif 0.25 < engagement <= 0.5:
-                    eng_string = 'Slightly Engaged'
-                elif 0.5 < engagement <= 0.75:
-                    eng_string = 'Engaged'
+            if not from_on_close:
+                self.set_initial_pic()
+                self.reset_aus()
+                if not len(self.eng_vals) > 0:
+                    self.final_eng("Not much datas for analysis")
                 else:
-                    eng_string = 'Highly Engaged'
+                    engagement = self.eng_vals[-1]
+                    if 0 < engagement <= 0.25:
+                        eng_string = 'Not Engaged'
+                    elif 0.25 < engagement <= 0.5:
+                        eng_string = 'Slightly Engaged'
+                    elif 0.5 < engagement <= 0.75:
+                        eng_string = 'Engaged'
+                    else:
+                        eng_string = 'Highly Engaged'
 
-                self.final_eng("Ending engagement value: " + str(round(engagement, 2)) + " -> " + eng_string)
+                    self.final_eng("Ending engagement value: " + str(round(engagement, 2)) + " -> " + eng_string)
 
     def cam_or_video(self):
         global cam_video_pop
@@ -353,3 +352,9 @@ class Graphics:
     def is_stopped_and_saveable(self):
         global stopped, num_frames_sent
         return stopped, num_frames_sent
+
+    def on_closing(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            if not stopped:
+                self.stop_analysis(from_on_close=True)
+            self.root.destroy()

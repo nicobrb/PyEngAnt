@@ -127,7 +127,8 @@ def disconnect():
     finalize_session()
     framearr = []
     eng_data = {}
-    GUI.edit_log_message("INFO: Client disconnected.")
+    print("Disconnected!")
+    q.put(GUI.edit_log_message("INFO: Client disconnected."))
 
 
 def try_connect():
