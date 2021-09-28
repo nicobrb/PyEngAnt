@@ -117,30 +117,7 @@ def output_data(data):
 @sio.event(namespace=namespace)
 def connect_error():
     print("The connection failed!")
-
-
-def finalize_session():
-    global save_Video, save_CSV
-
-    save_Video, save_CSV = GUI.save_bool_values()
-    now = datetime.datetime.now()
-    today = now.strftime("%Y%m%d-%H%M%S")
-
-    if save_Video and len(framearr) > 0:
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter('../recordings/recording'+today+'.mp4', fourcc,10.0, (500,400))
-        for i in range(len(framearr)):
-            out.write(cv2.cvtColor(np.array(framearr[i]), cv2.COLOR_BGR2RGB))
-        out.release()
-        print("video done")
-
-    if save_CSV and len(eng_data) > 0:
-        csv_dframe = pandas.DataFrame.from_dict(eng_data)
-        csv_dframe['timestamp'] = csv_dframe['timestamp'].apply(
-            lambda x: datetime.datetime.fromtimestamp(x).isoformat())
-
-        csv_dframe.to_csv('../savedCSVs/'+today+'.csv', index=True)
-        print("csv done")
+    q.put(GUI.edit_log_message("The connection failed!"))
 
 
 @sio.event(namespace=namespace)
@@ -164,6 +141,31 @@ def create_gui():
     master.mainloop()
 
 
+def finalize_session():
+    global save_Video, save_CSV
+    save_Video, save_CSV = GUI.save_bool_values()
+    now = datetime.datetime.now()
+    today = now.strftime("%Y%m%d-%H%M%S")
+
+    if save_Video and len(framearr) > 0:
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter('../images/recordings/recording'+today+'.mp4', fourcc,10.0, (500,400))
+        for i in range(len(framearr)):
+            out.write(cv2.cvtColor(np.array(framearr[i]), cv2.COLOR_BGR2RGB))
+        out.release()
+        print("video done")
+
+    if save_CSV and len(eng_data) > 0:
+        csv_dframe = pandas.DataFrame.from_dict(eng_data)
+        csv_dframe['timestamp'] = csv_dframe['timestamp'].apply(
+            lambda x: datetime.datetime.fromtimestamp(x).isoformat())
+
+        csv_dframe.to_csv('../images/savedCSVs/'+today+'.csv', index=True)
+        print("csv done")
+
+
 if __name__ == "__main__":
     t1 = Process(target=try_connect(), args=(q,))
     create_gui()
+
+

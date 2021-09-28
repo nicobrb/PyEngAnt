@@ -67,7 +67,7 @@ class EngSession(object):
                         f"size: {sys.getsizeof(response.content)} B")
                     json_obj = response.json()
                     face_data = json_obj.get("face_data")
-                    if face_data.get("image") != None:
+                    if face_data.get("image") is not None:
 
                         # capture requested data from openface output
                         image_data = face_data.pop("image")
@@ -160,7 +160,7 @@ class EngSession(object):
         except r.ConnectionError as e:
             # if one of the components is off or not responding
             self.session_valid = False
-            self.message = 'Webservers are not responding, abort connection. Check OpenFaceApi or EngRecApi are still '\ 
+            self.message = 'Webservers are not responding, abort connection. Check OpenFaceApi or EngRecApi are still ' \
                            'running. '
             print(
                 "ERROR: Webservers are not responding, abort connection. Check OpenFaceApi or EngRecApi are still "
@@ -170,7 +170,7 @@ class EngSession(object):
         except r.RequestException as e:
             # if one of the components is off or not responding
             self.session_valid = False
-            self.message = 'Webservers are not responding, abort connection. Check OpenFaceApi or EngRecApi are still '\
+            self.message = 'Webservers are not responding, abort connection. Check OpenFaceApi or EngRecApi are still ' \
                            'running. '
             print(
                 "ERROR: Webservers are not responding, abort connection. Check OpenFaceApi or EngRecApi are still "

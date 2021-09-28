@@ -1,4 +1,5 @@
 import _queue
+import math
 import time
 import base64
 import cv2
@@ -10,12 +11,14 @@ from tkinter import ttk, filedialog
 import tkinter.font as tkFont
 from PIL import ImageTk, Image
 from threading import Thread
+from socketio import exceptions
 
 ENCODING = "utf-8"
 stopped = True
 sockio = None
 sesh_id = None
-pop = None
+cam_video_pop = None
+eng_pop = None
 t1 = None
 connected = False
 input_type = None
@@ -28,7 +31,6 @@ temp_chart.add_subplot(111).plot(range(1), range(1))
 
 # TODO: save video/csv before closing frame if user checked the boxes
 # TODO: popup if client is not connected
-# TODO: engagement popup as user stops analysis
 # TODO: legend for analysis chart
 
 def start_streaming(tipo_input, video_url):
@@ -55,7 +57,7 @@ def start_streaming(tipo_input, video_url):
         jpg_as_text = base64.b64encode(buffer)
         jpg_as_text = jpg_as_text.decode(ENCODING)
         jpg_as_text = "image/jpeg," + jpg_as_text
-        cv2.waitKey(1000)
+        cv2.waitKey(333)
         try:
             if stopped:
                 raise IOError()
@@ -79,7 +81,12 @@ def start_analysis(final_input, video_url='0'):
     global stopped, t1, temp_chart
     stopped = False
     if not connected:
-        sockio.connect('http://localhost:8083', namespaces=['/session'])
+        try:
+            sockio.connect('http://localhost:8083', namespaces=['/session'])
+        except exceptions.ConnectionError as e:
+            print(e)
+        except Exception as e:
+            print(e)
 
     t1 = Thread(target=start_streaming, args=(final_input, video_url))
     t1.start()
@@ -87,7 +94,7 @@ def start_analysis(final_input, video_url='0'):
 
 def define(tipo_input):
     global filename, input_type
-    pop.destroy()
+    cam_video_pop.destroy()
     input_type = tipo_input
     if input_type == 'video':
         filename = filedialog.askopenfilename(initialdir=filename,
@@ -109,9 +116,11 @@ class Graphics:
         self.save_video = BooleanVar()
         self.save_CSV = BooleanVar()
         self.eng_vals = []
+        self.frames_array = []
 
         self.root.title('PyEngAnt')
         self.titles_style = tkFont.Font(family="Segoe UI", size=25)
+        self.results_style = tkFont.Font(family="Segoe UI", size=18)
         self.lab_style = tkFont.Font(family="Segoe UI", size=10)
         self.buttons_style = tkFont.Font(family="Segoe UI", size=15, weight='bold')
         self.ckbtn_style = tkFont.Font(family="Segoe UI", size=14)
@@ -250,12 +259,11 @@ class Graphics:
             self.img_canvas.image = latest_frame
             if latest_eng_value is not None:
                 self.eng_vals.append(latest_eng_value / 100)
-            else:
-                self.eng_vals.append(0.0)
+                self.frames_array.append(num_frame)
 
-            if num_frame >= 300 and num_frame % 50 == 0:
+            if len(self.eng_vals) > 0 and num_frame % 50 == 0:
                 temp_chart = Figure(figsize=(5, 5), dpi=100)
-                temp_chart.add_subplot(111).plot(range(num_frame), self.eng_vals)
+                temp_chart.add_subplot(111).plot(self.frames_array, self.eng_vals)
                 for chart in self.chart_frame.winfo_children():
                     chart.destroy()
                 chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
@@ -295,23 +303,49 @@ class Graphics:
             connected = False
             self.set_initial_pic()
             self.reset_aus()
+            if not len(self.eng_vals) > 0:
+                self.final_eng("Not much datas for analysis")
+            else:
+                engagement = self.eng_vals[-1]
+                if 0 < engagement <= 0.25:
+                    eng_string = 'Not Engaged'
+                elif 0.25 < engagement <= 0.5:
+                    eng_string = 'Slightly Engaged'
+                elif 0.5 < engagement <= 0.75:
+                    eng_string = 'Engaged'
+                else:
+                    eng_string = 'Highly Engaged'
+
+                self.final_eng("Ending engagement value: " + str(round(engagement, 2)) + " -> " + eng_string)
 
     def cam_or_video(self):
+        global cam_video_pop
+        cam_video_pop = Toplevel(self.root)
+        cam_video_pop.title('INPUT')
+        cam_video_pop.config(bg='white')
+        cam_video_pop.grab_set()
 
-        global pop
-        pop = Toplevel(self.root)
-        pop.title('INPUT')
-        pop.geometry("350x150")
-        pop.config(bg='white')
-        pop.grab_set()
-
-        pop_label = Label(pop, text='Choose a video input', bg='white', font=self.titles_style)
+        pop_label = Label(cam_video_pop, text='Choose a video input', bg='white', font=self.titles_style)
         pop_label.grid(row=0, column=0, columnspan=2, sticky='ew', padx=10, pady=10)
 
-        cam_btn = Button(pop, text='Webcam', command=lambda: define('webcam'), font=self.buttons_style)
-        video_btn = Button(pop, text='Video', command=lambda: define('video'), font=self.buttons_style)
+        cam_btn = Button(cam_video_pop, text='Webcam', command=lambda: define('webcam'), font=self.buttons_style)
+        video_btn = Button(cam_video_pop, text='Video', command=lambda: define('video'), font=self.buttons_style)
         cam_btn.grid(row=1, column=0, padx=10, pady=20)
         video_btn.grid(row=1, column=1, padx=10, pady=20)
+
+    def final_eng(self, result_text):
+        global eng_pop
+        eng_pop = Toplevel(self.root)
+        eng_pop.title('Analysis result')
+        eng_pop.config(bg='white')
+        eng_pop.grab_set()
+
+        eng_result_pop_label = Label(eng_pop, text='Ending engagement result:', bg='white',
+                                     font=self.results_style, anchor='center')
+        not_successful_label = Label(eng_pop, text=result_text, bg='white',
+                                     font=self.titles_style, anchor='center')
+        eng_result_pop_label.pack(pady=10)
+        not_successful_label.pack()
 
     def save_bool_values(self):
         return bool(self.save_video.get()), bool(self.save_CSV.get())
