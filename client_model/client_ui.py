@@ -115,11 +115,10 @@ class Graphics:
 
         self.root.configure(background='white')
         self.root.columnconfigure(0, weight=1)
-        self.title = Label(self.root, text=' PyEngAnT', fg='white', bg='black', font=self.titles_style, anchor='w')
+        self.title = Label(self.root, text=' (Py)Engagement Analysis Tool', fg='white', bg='black',
+                           font=self.titles_style, anchor='w')
         self.log_message = Label(self.root, text='INFO: Client disconnected', fg='white', bg='black',
                                  font=self.titles_style, anchor='e')
-        self.eng_ant_label = Label(self.root, text=' Engagement Analysis Tool', fg='black', bg='white',
-                                   font=self.titles_style, anchor='w')
 
         self.AU_01_label = Label(self.root, text="AU 01 - Inner brow raiser", fg='black', bg='white',
                                  font=self.lab_style)
@@ -153,6 +152,9 @@ class Graphics:
         chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
         chart_canvas.draw()
         chart_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+
+        self.eng_chart_label = Label(self.chart_frame, text='ENGAGEMENT CHART', font=self.titles_style, fg='black',
+                                     bg='white', anchor='center')
 
         self.start_button = Button(self.btn_frame, text='Start Analysis', fg='white', bg='blue',
                                    font=self.buttons_style, command=self.cam_or_video)
@@ -201,24 +203,24 @@ class Graphics:
         self.img_canvas = Label(image=self.default_image, anchor='center')
 
         self.title.grid(row=0, column=0, columnspan=6, sticky='ew')
-        self.eng_ant_label.grid(row=1, column=0, columnspan=2, sticky='ew')
-        self.img_canvas.grid(row=2, column=0, rowspan=8, columnspan=3, padx=10, sticky='w')
+        self.img_canvas.grid(row=1, column=0, rowspan=8, columnspan=3, padx=10, pady=10, sticky='w')
         self.log_message.grid(row=0, column=6, columnspan=3, sticky='ew')
 
-        self.chart_frame.grid(row=9, column=3, rowspan=4, columnspan=6, sticky='nsew', pady=10)
-        self.btn_frame.grid(row=10, column=0, columnspan=3, sticky='nsew')
+        self.chart_frame.grid(row=8, column=3, rowspan=4, columnspan=6, sticky='nsew', pady=10)
+        self.eng_chart_label.pack()
+        self.btn_frame.grid(row=9, column=0, columnspan=3, sticky='nsew')
         self.start_button.pack(side=LEFT, padx=10, pady=10)
         self.ckbtn_frame.pack(side=LEFT, padx=10, pady=10)
         self.stop_button.pack(side=LEFT, padx=10, pady=10)
         self.save_video_ckbtn.pack(side=BOTTOM)
         self.save_CSV_ckbtn.pack(side=BOTTOM)
 
-        row = 2
+        row = 1
         col = 3
         for key in self.AUs_bars_dict:
             self.AUs_labels_dict[key].grid(row=row, column=col, pady=5, padx=10)
-            self.AUs_bars_dict[key].grid(row=(row + 1), column=col, pady=5, padx=10)
-            if col == 8 and row < 9:
+            self.AUs_bars_dict[key].grid(row=(row + 1), column=col, padx=10)
+            if col == 8 and row < 8:
                 col = 3
                 row += 2
             else:
@@ -235,12 +237,12 @@ class Graphics:
             self.root.after(20, self.check_queue_poll, queue)
 
     def set_initial_pic(self):
-        self.img_canvas.configure(image=self.default_image)
+        self.img_canvas.configure(image=self.default_image, anchor='center')
         self.img_canvas.image = self.default_image
 
-    def update_frame_and_chart(self, latest_frame, latest_eng_value, num_frame):
-        global temp_chart
-        if not stopped:
+    def update_frame_and_chart(self, latest_frame, latest_eng_value, num_frame, sessione):
+        global temp_chart, sesh_id
+        if not stopped and sessione == sesh_id:
             self.img_canvas.configure(image=latest_frame, anchor='w')
             self.img_canvas.image = latest_frame
             if latest_eng_value is not None:
@@ -256,8 +258,6 @@ class Graphics:
                 chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
                 chart_canvas.draw()
                 chart_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
-        else:
-            return
 
     def edit_log_message(self, message):
         self.log_message.configure(text=message + ' ')

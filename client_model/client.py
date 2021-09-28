@@ -89,14 +89,14 @@ def log_message(response):
 
 @sio.event(namespace=namespace)
 def output_data(data):
-    global frame_counter, framearr, eng_data
+    global frame_counter, framearr, eng_data, session_id
     if data['open_id'] == session_id:
         try:
             image_data = data['image_data'].split(",")[1].encode(ENCODING)
             out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((500, 400), Image.ANTIALIAS)
             out_image = ImageTk.PhotoImage(out_frame)
             frame_counter += 1
-            q.put(GUI.update_frame_and_chart(out_image, data['eng_data']['eng_val'], frame_counter))
+            q.put(GUI.update_frame_and_chart(out_image, data['eng_data']['eng_val'], frame_counter, session_id))
             framearr.append(out_frame)
 
             if frame_counter == 1:
