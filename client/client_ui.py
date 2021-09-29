@@ -256,7 +256,7 @@ class Graphics:
             self.img_canvas.configure(image=latest_frame, anchor='w')
             self.img_canvas.image = latest_frame
             if latest_eng_value is not None:
-                self.eng_vals.append(latest_eng_value / 100)
+                self.eng_vals.append(latest_eng_value)
                 self.frames_array.append(num_frame)
 
             if len(self.eng_vals) > 0 and num_frame % 50 == 0:
