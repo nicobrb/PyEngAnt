@@ -122,6 +122,7 @@ class Graphics:
         self.lab_style = tkFont.Font(family="Segoe UI", size=10)
         self.buttons_style = tkFont.Font(family="Segoe UI", size=15, weight='bold')
         self.ckbtn_style = tkFont.Font(family="Segoe UI", size=14)
+        self.legend_style = tkFont.Font(family="Segoe UI", size=18)
 
         self.root.configure(background='white')
         self.root.columnconfigure(0, weight=1)
@@ -158,6 +159,7 @@ class Graphics:
         self.btn_frame = Frame(self.root, bg='white')
         self.ckbtn_frame = Frame(self.btn_frame, bg='white')
         self.chart_frame = Frame(self.root, bg='white')
+        self.legend_frame = Frame(self.root, bg='white')
 
         chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
         chart_canvas.draw()
@@ -175,6 +177,12 @@ class Graphics:
                                             variable=self.save_video, onvalue=True, offvalue=False)
         self.save_CSV_ckbtn = Checkbutton(self.ckbtn_frame, text='Save CSV', bg='white', font=self.ckbtn_style,
                                           variable=self.save_CSV, onvalue=True, offvalue=False)
+
+        self.eng_legend = Label(self.legend_frame, text='ENGAGEMENT LEGEND', bg='white', font=self.titles_style)
+        self.eng_description = Label(self.legend_frame,
+                                     text='from 0 to 0.25 = Not Engaged\nfrom 0.25 to 0.5 = Slightly '
+                                          'Engaged\nfrom 0.5 to 0.75 = Engaged\n over 0.75 = Highly Engaged',
+                                     bg='white', font=self.legend_style)
 
         self.prog_AU_01 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
         self.prog_AU_02 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
@@ -224,6 +232,9 @@ class Graphics:
         self.stop_button.pack(side=LEFT, padx=10, pady=10)
         self.save_video_ckbtn.pack(side=BOTTOM)
         self.save_CSV_ckbtn.pack(side=BOTTOM)
+        self.legend_frame.grid(row=10, column=0, columnspan=3, rowspan=3, padx=20, sticky='nsew')
+        self.eng_legend.pack()
+        self.eng_description.pack()
 
         row = 1
         col = 3
@@ -261,7 +272,7 @@ class Graphics:
 
             if len(self.eng_vals) > 0 and num_frame % 50 == 0:
                 temp_chart = Figure(figsize=(5, 5), dpi=100)
-                temp_chart.add_subplot(111).plot(self.frames_array, self.eng_vals)
+                temp_chart.add_subplot(111).plot(self.frames_array, self.eng_vals, "-r")
                 for chart in self.chart_frame.winfo_children():
                     chart.destroy()
                 chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
@@ -343,8 +354,8 @@ class Graphics:
                                      font=self.results_style, anchor='center')
         not_successful_label = Label(eng_pop, text=result_text, bg='white',
                                      font=self.titles_style, anchor='center')
-        eng_result_pop_label.pack(pady=10)
-        not_successful_label.pack()
+        eng_result_pop_label.pack(pady=20, padx=5)
+        not_successful_label.pack(pady=20, padx=5)
 
     def save_bool_values(self):
         return bool(self.save_video.get()), bool(self.save_CSV.get())
