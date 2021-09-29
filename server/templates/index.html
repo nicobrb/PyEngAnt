@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Engagement Analysis Tool">
+    <meta name="generator" content="Hugo 0.82.0">
+    <title>EngAnt</title>
+    
+
+    <!-- Bootstrap core CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+
+    
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+    <style>
+      #videoElement {
+        display: none;
+        min-width: 640px;
+        min-height: 480px;
+      }
+      #canvasElement {
+          display: none;
+          min-width: 640px;
+          min-height: 480px;
+      }
+      #photo {
+          min-width:300px;
+          min-height:500px;
+          width: 100%;
+          background-image: url(static/images/profile_picture.png);
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: contain;
+          border: 1px solid rgb(100, 100, 100);
+      }
+      /*#myChart {
+          background: linear-gradient(to bottom,
+                                      #fff 0% 2%,
+                                      rgba(161,216,132,0.5) 2% 26%,
+                                      rgba(243,221,109,0.5) 26% 48%,
+                                      rgba(255,160,106,0.5) 48% 72%,
+                                      rgba(241,128,112,0.5) 72% 96%,
+                                      #fff 96%);
+      }*/
+      #face_data {
+          width: 100%;
+          min-height: 200px;
+          font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+          font-size: medium;
+      }
+
+      #sidebarMenu{
+        display: none;
+      }
+
+      #table-container{
+          height: 600px;
+          overflow: scroll;
+      }
+      #log_last_message{
+        color: #fff;
+        padding-left: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .navbar{
+        justify-content: flex-start !important;
+      }
+      .tooltip{
+        background-color: #555;
+        color: #fff;
+      }
+
+      .loading-modal{
+        position: absolute;
+        top:50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        background-color: #fff;
+        -webkit-box-shadow: 5px 5px 23px -13px #000000;
+        -moz-box-shadow: 5px 5px 23px -13px #000000;
+        -o-box-shadow: 5px 5px 23px -13px #000000;
+        box-shadow: 5px 5px 23px -13px #000000;
+        padding: 10px;
+      }
+     </style>
+  </head>
+  <body>
+    
+<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+  <a class="navbar-brand col-2 me-0 px-3" href="#">EngAnT</a>
+  <div class="w3-dropdown-hover col-10" id="log_message_dd">
+    <a><div id="log_last_message">Log Messagges</div></a>
+    <div class="w3-dropdown-content w3-padding w-100" id="log_message_list">
+    </div>
+  </div>
+</header>
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12 ms-sm-auto col-lg-12 px-md-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Engagement Analysis Tool</h1>
+        <!--<div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+            <span data-feather="calendar"></span>
+            This week
+          </button>
+        </div>-->
+      </div>
+      <div class="row">
+        <video autoplay="false" allow="camera" id="videoElement" controls muted></video>
+        <div class="col-sm-12 col-md-12 col-lg-6">
+          <div class="col-12">
+            <div class="row">
+              <div class = "col-12">
+                <canvas class="w-100" allow="camera" id="canvasElement"></canvas> <!--width="640" height="480"-->
+                <img id="photo">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12"><p><h3>Options</h3></p>
+              </div>
+              <div class = "col-6">
+                <div class="row">
+                  <div class="col-12">
+                    <button class="btn btn-primary" id="start_btn" name="start_btn" data-bs-toggle="modal" data-bs-target="#startModal">Start Analysis</button>
+                    <button class="btn btn-danger" id="stop_btn" name="stop_btn">Stop Analysis</button>
+                  </div>
+                </div>
+                <div class="row">
+                  <p>
+                    <div class="col-6">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="saveVIDEO">
+                        <label class="form-check-label" for="flexSwitchCheckDefault">Save Video</label>
+                        <a style="display:none;" id="webm_a">Download Video</a>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="saveCSV">
+                        <label class="form-check-label" for="flexSwitchCheckDefault">Save CSV</label>
+                        <a style="display:none;" id="csv_a">Download CSV</a>
+                      </div>
+                    </div>
+                  </p>
+                </div>
+              </div>
+                <div class="col-3">
+                  <label for="fps_range" class="form-label"
+                  data-toggle="tooltip" data-placement="top" title=
+                  "means the number of frames that will be captured from streaming"
+                  >FPS<br>(1-10 frame per second)</label>
+                  <input type="range" class="form-range" min="1" max="10" step="1" id="fps_range" onInput="$('#fps_rangeval').html($(this).val())">
+                  <span id="fps_rangeval">2<!-- Default value --></span>
+                </div>
+                <div class="col-3">
+                  <label for="streaming_playback_range" class="form-label"
+                  data-toggle="tooltip" data-placement="top" title=
+                  "modify the playback of streaming. Example: x1 is the standard streaming playback, x2 double the number of frames that will be captured slowing the playback"
+                  >Streaming Playback<br>(x1-x10 num. of frames)</label>
+                  <input type="range" class="form-range" min="1" max="10" step="1" id="streaming_playback_range" onInput="$('#playback_rangeval').html($(this).val())">
+                  <span>x</span><span id="playback_rangeval">2</span><!-- Default value -->
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-6">
+          <div class="col-12">
+            <div class="row p-4">
+              <canvas class="w-100" id="myChart"></canvas>
+            </div>
+            <div class="row">
+              <p><h3>AUs</h3></p>
+              <div class="row">
+                <div class="col-4">
+                  <label for="AU01_r" class="form-label">AU 01 - Inner brow raiser</label><div class="progress"><div class="progress-bar" id="AU01_r" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU02_r" class="form-label">AU 02 - Outer brow raiser</label><div class="progress"><div class="progress-bar" id="AU02_r" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU04_r" class="form-label">AU 04 - Brow lowerer</label><div class="progress"><div class="progress-bar" id="AU04_r" role="progressbar" aria-valuenow="3" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU05_r" class="form-label">AU 05 - Upper lid raiser</label><div class="progress"><div class="progress-bar" id="AU05_r" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU06_r" class="form-label">AU 06 - Cheek raiser	</label><div class="progress"><div class="progress-bar" id="AU06_r" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU07_r" class="form-label">AU 07 - Lid tightener</label><div class="progress"><div class="progress-bar" id="AU07_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                </div>
+                <div class="col-4">
+                  <label for="AU09_r" class="form-label">AU 09 - Nose wrinkler</label><div class="progress"><div class="progress-bar" id="AU09_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU10_r" class="form-label">AU 10 - Upper lip raiser</label><div class="progress"><div class="progress-bar" id="AU10_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU12_r" class="form-label">AU 12 - Lip corner puller</label><div class="progress"><div class="progress-bar" id="AU12_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU14_r" class="form-label">AU 14 - Dimpler</label><div class="progress"><div class="progress-bar" id="AU14_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU15_r" class="form-label">AU 15 - Lip corner depressor</label><div class="progress"><div class="progress-bar" id="AU15_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU17_r" class="form-label">AU 17 - Chin raiser</label><div class="progress"><div class="progress-bar" id="AU17_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                </div>
+                <div class="col-4">
+                  <label for="AU20_r" class="form-label">AU 20 - Lip stretcher</label><div class="progress"><div class="progress-bar" id="AU20_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU23_r" class="form-label">AU 23 - Lip tightener</label><div class="progress"><div class="progress-bar" id="AU23_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU25_r" class="form-label">AU 25 - Lips part</label><div class="progress"><div class="progress-bar" id="AU25_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU26_r" class="form-label">AU 26 - Jaw drop</label><div class="progress"><div class="progress-bar" id="AU26_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU45_r" class="form-label">AU 45 - Blink</label><div class="progress"><div class="progress-bar" id="AU45_r" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div></div>
+                  <label for="AU28_c" class="form-label">AU 28 - Lip suck</label><div class="progress"><div class="progress-bar" id="AU28_c" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="1"></div></div>
+                </div>                  
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>      
+      <div class="row">
+        <h2>Face details datas</h2>
+        <div class="col-12"></div>
+        <div class="table-responsive" id="table-container">
+          <table class="table table-striped table-sm" id="eng_data_table">
+            <thead>
+              <tr>
+                <th>Eng Value</th>
+                <th>#Frame</th>
+                <th>Confidence</th>
+                <th>Timestamp</th>
+                <th>Gaze_0_x</th>
+                <th>Gaze_0_y</th>
+                <th>Gaze_0_z</th>
+                <th>Gaze_1_x</th>
+                <th>Gaze_1_y</th>
+                <th>Gaze_1_z</th>
+                <th>Pose_Tx</th>
+                <th>Pose_Ty</th>
+                <th>Pose_Tz</th>
+                <th>Pose_Rx</th>
+                <th>Pose_Ry</th>
+                <th>Pose_Rz</th>
+                <th>AUO1_r</th>
+                <th>AUO2_r</th>
+                <th>AUO4_r</th>
+                <th>AUO5_r</th>
+                <th>AUO6_r</th>
+                <th>AUO7_r</th>
+                <th>AUO9_r</th>
+                <th>AU10_r</th>
+                <th>AU12_r</th>
+                <th>AU14_r</th>
+                <th>AU15_r</th>
+                <th>AU17_r</th>
+                <th>AU20_r</th>
+                <th>AU23_r</th>
+                <th>AU25_r</th>
+                <th>AU26_r</th>
+                <th>AU45_r</th>
+                <th>AU28_c</th>
+              </tr>
+            </thead>
+            <tbody id="face_data">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="modal" id="startModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Choose a video input</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row d-flex align-items-center justify-content-around">
+          <div class="col-6">
+            <div class="row">
+              <div class="col-12 d-flex justify-content-center">
+                <span><img src="static/images/webcam.png" alt="webcam"/></span>
+              </div>
+            </div>            
+            <div class="row ">
+              <div class="col-12 d-flex justify-content-center">
+                <button type="button" class="btn btn-secondary" id="webcamInput" data-bs-dismiss="modal">Webcam</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="row">
+              <div class="col-12 d-flex justify-content-center">
+                <span><img src="static/images/video.png" alt="video"/></span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12 d-flex justify-content-center">
+                <button type="button" class="btn btn-secondary" id="videoInput" data-bs-dismiss="modal">Video</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="endModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Analysis Result</h5>
+        <button type="button" class="btn-close" onclick="$('#endModal').modal('hide')" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <span>Ending engagement value:</span><span id="end_eng_value"></span>
+        <p>Ending result:</p>
+        <h2 class="text-center" id="end_eng_label"></h2>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="$('#endModal').modal('hide')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="loading-modal d-flex justify-content-around align-items-center d-none">
+  <span >Starting session...</span>
+  <div class="spinner-border text-primary ms-auto" role="status" aria-hidden="true"></div>
+</div>
+<input id="video-file-input" type="file" name="name" style="display: none;" accept=".mp4, .webm, .ogg"/>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js" integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="undefined" crossorigin="anonymous"></script>    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.3.2/chart.js" integrity="sha512-CAv0l04Voko2LIdaPmkvGjH3jLsH+pmTXKFoyh5TIimAME93KjejeP9j7wSeSRXqXForv73KUZGJMn8/P98Ifg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    
+    <!--<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>-->
+    <!--<script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
+    <script src="{{ url_for('static', filename='js/whammy.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!--<script src="{{ url_for('static', filename='js/opencv.js') }}" onload="onOpenCvReady();"></script>-->
+    </body>
+</html>
