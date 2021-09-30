@@ -1,4 +1,4 @@
-import client_ui
+import GUI_client
 import socketio
 import base64
 import time
@@ -9,7 +9,7 @@ import numpy as np
 from tkinter import *
 from PIL import ImageTk, Image
 from io import BytesIO
-from client_ui import Graphics
+from GUI_client import Graphics
 from socketio import exceptions
 from multiprocessing import *
 
@@ -57,7 +57,6 @@ save_Video = False
 q = Queue()
 
 master = Tk()
-master.geometry('800x600')
 master.minsize(800, 600)
 master.state('zoomed')
 GUI = Graphics(master, q)
@@ -76,7 +75,7 @@ def check_session_id_response(data):
     session_id = data['session_id']
     print("session_id:", session_id)
     q.put(GUI.edit_log_message("INFO: Connected"))
-    q.put(client_ui.update_sio_and_sesh(sio, session_id))
+    q.put(GUI_client.update_sio_and_sesh(sio, session_id))
 
 
 @sio.event(namespace=namespace)
@@ -93,7 +92,7 @@ def output_data(data):
     if data['open_id'] == session_id:
         try:
             image_data = data['image_data'].split(",")[1].encode(ENCODING)
-            out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((500, 400), Image.ANTIALIAS)
+            out_frame = Image.open(BytesIO(base64.b64decode(image_data))).resize((400, 300), Image.ANTIALIAS)
             out_image = ImageTk.PhotoImage(out_frame)
             frame_counter += 1
             q.put(GUI.update_frame_and_chart(out_image, data['eng_data']['eng_val'], frame_counter, session_id))
