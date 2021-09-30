@@ -13,7 +13,6 @@ from GUI_client import Graphics
 from socketio import exceptions
 from multiprocessing import *
 
-
 # fps_enum = {1: 1000, 2: 500, 3: 330, 4: 250, 6: 166, 7: 143, 8: 125, 9: 111, 10: 100}
 # playback_rate_enum = {1: 1, 2: 0.5, 3: 0.333, 4: 0.25, 5: 0.2, 6: 0.166, 7: 0.142, 8: 0.125, 9: 0.111, 10: 0.1}
 DEFAULT_ENG_VALUE = 'null'
@@ -45,7 +44,6 @@ end_eng_label = ""
 timestamp_start = time.time()
 session_id = None
 fps = DEFAULT_FPS_RATE
-# playback = DEFAULT_PLAYBACK_RATE
 starting_seq_size = 300
 message = None
 frame_counter = 0
@@ -122,11 +120,11 @@ def connect_error():
 @sio.event(namespace=namespace)
 def disconnect():
     global ping_timeout_counter, frame_counter, framearr, eng_data
-    frame_counter = 0
+    print("Disconnected!")
     finalize_session()
+    frame_counter = 0
     framearr = []
     eng_data = {}
-    print("Disconnected!")
     q.put(GUI.edit_log_message("INFO: Client disconnected."))
 
 
@@ -137,10 +135,6 @@ def try_connect():
         print(e)
 
 
-def create_gui():
-    master.mainloop()
-
-
 def finalize_session():
     global save_Video, save_CSV
     save_Video, save_CSV = GUI.save_bool_values()
@@ -149,7 +143,7 @@ def finalize_session():
 
     if save_Video and len(framearr) > 0:
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter('../images/recordings/recording'+today+'.mp4', fourcc,10.0, (500,400))
+        out = cv2.VideoWriter('../images/recordings/recording' + today + '.mp4', fourcc, 10.0, (500, 400))
         for i in range(len(framearr)):
             out.write(cv2.cvtColor(np.array(framearr[i]), cv2.COLOR_BGR2RGB))
         out.release()
@@ -160,12 +154,14 @@ def finalize_session():
         csv_dframe['timestamp'] = csv_dframe['timestamp'].apply(
             lambda x: datetime.datetime.fromtimestamp(x).isoformat())
 
-        csv_dframe.to_csv('../images/savedCSVs/'+today+'.csv', index=True)
+        csv_dframe.to_csv('../images/savedCSVs/' + today + '.csv', index=True)
         print("csv done")
+
+
+def create_gui():
+    master.mainloop()
 
 
 if __name__ == "__main__":
     t1 = Process(target=try_connect(), args=(q,))
     create_gui()
-
-

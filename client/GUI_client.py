@@ -12,6 +12,8 @@ from PIL import ImageTk, Image
 from threading import Thread
 from socketio import exceptions
 import ctypes
+import sys
+
 
 user32 = ctypes.windll.user32
 screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
@@ -323,30 +325,33 @@ class Graphics:
 
     def stop_analysis(self, from_on_close=False):
         global stopped, connected, input_type
-        if not stopped:
+        if from_on_close:
+            stopped = True
+            sockio.disconnect()
+        elif not stopped:
             stopped = True
             if input_type == 'webcam':
                 sockio.emit('client_disconnect_request', namespace='/session')
             elif input_type == 'video':
                 sockio.emit('client_video_end_disconnect_request', namespace='/session')
             connected = False
-            if not from_on_close:
-                self.set_initial_pic()
-                self.reset_aus()
-                if not len(self.eng_vals) > 0:
-                    self.final_eng("Not much datas for analysis")
-                else:
-                    engagement = self.eng_vals[-1]
-                    if 0 < engagement <= 0.25:
-                        eng_string = 'Not Engaged'
-                    elif 0.25 < engagement <= 0.5:
-                        eng_string = 'Slightly Engaged'
-                    elif 0.5 < engagement <= 0.75:
-                        eng_string = 'Engaged'
-                    else:
-                        eng_string = 'Highly Engaged'
+            self.set_initial_pic()
+            self.reset_aus()
 
-                    self.final_eng("Ending engagement value: " + str(round(engagement, 2)) + " -> " + eng_string)
+            if not len(self.eng_vals) > 0:
+                self.final_eng("Not much datas for analysis")
+            else:
+                engagement = self.eng_vals[-1]
+                if 0 < engagement <= 0.25:
+                    eng_string = 'Not Engaged'
+                elif 0.25 < engagement <= 0.5:
+                    eng_string = 'Slightly Engaged'
+                elif 0.5 < engagement <= 0.75:
+                    eng_string = 'Engaged'
+                else:
+                    eng_string = 'Highly Engaged'
+
+                self.final_eng("Ending engagement value: " + str(round(engagement, 2)) + " -> " + eng_string)
 
     def cam_or_video(self):
         global cam_video_pop
@@ -388,4 +393,7 @@ class Graphics:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             if not stopped:
                 self.stop_analysis(from_on_close=True)
+            elif connected:
+                sockio.disconnect()
             self.root.destroy()
+
