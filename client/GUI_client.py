@@ -11,6 +11,10 @@ import tkinter.font as tkFont
 from PIL import ImageTk, Image
 from threading import Thread
 from socketio import exceptions
+import ctypes
+
+user32 = ctypes.windll.user32
+screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
 ENCODING = "utf-8"
 stopped = True
@@ -23,12 +27,16 @@ connected = False
 input_type = None
 num_frames_sent = 0
 filename = "/"
-starting_img = Image.open("../images/profile_picture.png").resize((500, 400), Image.ANTIALIAS)
-temp_chart = Figure(figsize=(5, 5), dpi=100)
-temp_chart.add_subplot(111).plot(range(1), range(1))
+starting_img = Image.open("../images/profile_picture.png").resize((400, 300), Image.ANTIALIAS)
 
+if screensize[0] == 1536:
+    temp_chart = Figure(figsize=(5, 5), dpi=90)
+    temp_chart.add_subplot(111).plot(range(1), range(1))
 
-# TODO: legend for analysis chart
+else:
+    temp_chart = Figure(figsize=(4, 4), dpi=90)
+    temp_chart.add_subplot(111).plot(range(1), range(1))
+
 
 def start_streaming(tipo_input, video_url):
     global ENCODING, sockio, sesh_id, num_frames_sent
@@ -117,12 +125,17 @@ class Graphics:
 
         self.root.title('PyEngAnt')
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.titles_style = tkFont.Font(family="Segoe UI", size=25)
+
+        if screensize[0] == 1536:
+            self.root.call('tk', 'scaling', 1.6)
+        else:
+            self.root.call('tk', 'scaling', 1.2)
+        self.titles_style = tkFont.Font(family="Segoe UI", size=22)
         self.results_style = tkFont.Font(family="Segoe UI", size=18)
         self.lab_style = tkFont.Font(family="Segoe UI", size=10)
         self.buttons_style = tkFont.Font(family="Segoe UI", size=15, weight='bold')
         self.ckbtn_style = tkFont.Font(family="Segoe UI", size=14)
-        self.legend_style = tkFont.Font(family="Segoe UI", size=18)
+        self.legend_style = tkFont.Font(family="Segoe UI", size=16)
 
         self.root.configure(background='white')
         self.root.columnconfigure(0, weight=1)
@@ -146,7 +159,7 @@ class Graphics:
         self.AU_12_label = Label(self.root, text="AU 12 - Lip corner puller", fg='black', bg='white',
                                  font=self.lab_style)
         self.AU_14_label = Label(self.root, text="AU 14 - Dimpler", fg='black', bg='white', font=self.lab_style)
-        self.AU_15_label = Label(self.root, text="AU 15 - Lip corner depressor", fg='black', bg='white',
+        self.AU_15_label = Label(self.root, text="AU 15 - Lip corner depr.", fg='black', bg='white',
                                  font=self.lab_style)
         self.AU_17_label = Label(self.root, text="AU 17 - Chin raiser", fg='black', bg='white', font=self.lab_style)
         self.AU_20_label = Label(self.root, text="AU 20 - Lip stretcher", fg='black', bg='white', font=self.lab_style)
@@ -160,12 +173,13 @@ class Graphics:
         self.ckbtn_frame = Frame(self.btn_frame, bg='white')
         self.chart_frame = Frame(self.root, bg='white')
         self.legend_frame = Frame(self.root, bg='white')
+        self.img_frame = Frame(self.root, bg='white')
 
         chart_canvas = FigureCanvasTkAgg(temp_chart, master=self.chart_frame)
         chart_canvas.draw()
         chart_canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
 
-        self.eng_chart_label = Label(self.chart_frame, text='ENGAGEMENT CHART', font=self.titles_style, fg='black',
+        self.eng_chart_label = Label(self.root, text='ENGAGEMENT CHART', font=self.titles_style, fg='black',
                                      bg='white', anchor='center')
 
         self.start_button = Button(self.btn_frame, text='Start Analysis', fg='white', bg='blue',
@@ -182,26 +196,26 @@ class Graphics:
         self.eng_description = Label(self.legend_frame,
                                      text='from 0 to 0.25 = Not Engaged\nfrom 0.25 to 0.5 = Slightly '
                                           'Engaged\nfrom 0.5 to 0.75 = Engaged\n over 0.75 = Highly Engaged',
-                                     bg='white', font=self.legend_style)
+                                     bg='white', font=self.legend_style, anchor='center')
 
-        self.prog_AU_01 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_02 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_04 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_05 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_06 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_07 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_09 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_10 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_12 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_14 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_15 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_17 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_20 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_23 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_25 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_26 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_45 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
-        self.prog_AU_28 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=150, mode='determinate')
+        self.prog_AU_01 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_02 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_04 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_05 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_06 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_07 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_09 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_10 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_12 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_14 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_15 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_17 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_20 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_23 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_25 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_26 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_45 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
+        self.prog_AU_28 = ttk.Progressbar(self.root, orient=HORIZONTAL, length=120, mode='determinate')
 
         self.AUs_bars_dict = {'AU01_r': self.prog_AU_01, 'AU02_r': self.prog_AU_02, 'AU04_r': self.prog_AU_04,
                               'AU05_r': self.prog_AU_05, 'AU06_r': self.prog_AU_06, 'AU07_r': self.prog_AU_07,
@@ -218,38 +232,42 @@ class Graphics:
                                 'AU26_r': self.AU_26_label, 'AU45_r': self.AU_45_label, 'AU28_c': self.AU_28_label}
 
         self.default_image = ImageTk.PhotoImage(starting_img)
-        self.img_canvas = Label(image=self.default_image, anchor='center')
+        self.img_canvas = Label(self.img_frame, image=self.default_image, anchor='center')
 
         self.title.grid(row=0, column=0, columnspan=6, sticky='ew')
-        self.img_canvas.grid(row=1, column=0, rowspan=8, columnspan=3, padx=10, pady=10, sticky='w')
-        self.log_message.grid(row=0, column=6, columnspan=3, sticky='ew')
+        self.img_frame.grid(row=1, column=0, rowspan=9, columnspan=3, padx=10, pady=10)
+        self.img_canvas.pack(fill='both')
+        self.log_message.grid(row=0, column=5, columnspan=3, sticky='ew')
 
-        self.chart_frame.grid(row=8, column=3, rowspan=4, columnspan=6, sticky='nsew', pady=10)
-        self.eng_chart_label.pack()
-        self.btn_frame.grid(row=9, column=0, columnspan=3, sticky='nsew')
-        self.start_button.pack(side=LEFT, padx=10, pady=10)
-        self.ckbtn_frame.pack(side=LEFT, padx=10, pady=10)
-        self.stop_button.pack(side=LEFT, padx=10, pady=10)
+        self.chart_frame.grid(row=9, column=3, rowspan=8, columnspan=5, sticky='nsew')
+        self.eng_chart_label.grid(row=17, column=3, columnspan=8, sticky='nsew')
+        self.btn_frame.grid(row=10, column=0, columnspan=3)
+        self.start_button.pack(side=LEFT, fill=X)
+        self.ckbtn_frame.pack(side=LEFT, fill=X)
+        self.stop_button.pack(side=LEFT, fill=X)
         self.save_video_ckbtn.pack(side=BOTTOM)
         self.save_CSV_ckbtn.pack(side=BOTTOM)
-        self.legend_frame.grid(row=10, column=0, columnspan=3, rowspan=3, padx=20, sticky='nsew')
-        self.eng_legend.pack()
-        self.eng_description.pack()
+        self.legend_frame.grid(row=11, column=0, columnspan=3, rowspan=6)
+        self.eng_legend.grid(row=0)
+        self.eng_description.grid(row=1, rowspan=5)
 
         row = 1
         col = 3
         for key in self.AUs_bars_dict:
+            if row == 7:
+                col += 1
             self.AUs_labels_dict[key].grid(row=row, column=col, pady=5, padx=10)
             self.AUs_bars_dict[key].grid(row=(row + 1), column=col, padx=10)
-            if col == 8 and row < 8:
+            if col == 7 and row < 8:
                 col = 3
                 row += 2
-            else:
+            elif row != 7:
                 col += 1
 
-        self.root.after(1000, self.check_queue_poll, self.queue)
+        self.root.after(2000, self.check_queue_poll, self.queue)
 
     def check_queue_poll(self, queue):
+        global screensize
         try:
             queue.get(0)
         except _queue.Empty:
@@ -264,14 +282,16 @@ class Graphics:
     def update_frame_and_chart(self, latest_frame, latest_eng_value, num_frame, sessione):
         global temp_chart, sesh_id
         if not stopped and sessione == sesh_id:
-            self.img_canvas.configure(image=latest_frame, anchor='w')
+            self.img_canvas.configure(image=latest_frame, anchor='center')
             self.img_canvas.image = latest_frame
             if latest_eng_value is not None:
                 self.eng_vals.append(latest_eng_value)
                 self.frames_array.append(num_frame)
-
             if len(self.eng_vals) > 0 and num_frame % 50 == 0:
-                temp_chart = Figure(figsize=(5, 5), dpi=100)
+                if screensize[0] == 1536:
+                    temp_chart = Figure(figsize=(5, 5), dpi=90)
+                else:
+                    temp_chart = Figure(figsize=(4, 4), dpi=90)
                 temp_chart.add_subplot(111).plot(self.frames_array, self.eng_vals, "-r")
                 for chart in self.chart_frame.winfo_children():
                     chart.destroy()
