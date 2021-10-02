@@ -1,7 +1,7 @@
 # PyEngAnt
 Repository riguardante la rivisitazione in Python del modello client-server del progetto EngAnt, inizialmente ideata da Francesco Angarano.
 
-Rielaborazione a cura di Nicola Barbaro (Bari), anno accademico 2020/2021.
+Rielaborazione a cura di Nicola Barbaro, anno accademico 2020/2021 (Bari).
 
 #Prima di iniziare
 
