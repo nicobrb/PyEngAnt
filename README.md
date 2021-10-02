@@ -3,7 +3,7 @@ Repository riguardante la rivisitazione in Python del modello client-server del 
 
 Rielaborazione a cura di Nicola Barbaro, anno accademico 2020/2021 (Bari).
 
-#Prima di iniziare
+# Prima di iniziare
 
 - Installare WSL2 seguendo questa guida:
 
@@ -31,7 +31,7 @@ Rielaborazione a cura di Nicola Barbaro, anno accademico 2020/2021 (Bari).
 
     ```pip install -r requirements.txt```
 
-#Inizializzare il server
+# Inizializzare il server
 
 - Spostarsi sulla cartella del server:
     
@@ -50,7 +50,7 @@ Rielaborazione a cura di Nicola Barbaro, anno accademico 2020/2021 (Bari).
   *NB: il processo fallirà se è già presente un processo server chiamato engflaskserver in Docker.*
 
 
-#Utilizzare il client
+# Utilizzare il client
 
 - Tornare alla cartella principale:
   
