@@ -38,7 +38,7 @@ Rielaborazione a cura di Nicola Barbaro, anno accademico 2020/2021 (Bari).
     ```cd server```
 
 
-- Assicurandosi di avere almeno un processo di Docker attivo, installare il server:
+- Assicurandosi di avere almeno auna istanza di Docker attiva, installare il server:
 
   ```docker build -t engflask .```
 
