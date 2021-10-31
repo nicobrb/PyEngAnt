@@ -29,7 +29,7 @@ connected = False
 input_type = None
 num_frames_sent = 0
 filename = "/"
-starting_img = Image.open("./images/profile_picture.png").resize((400, 300), Image.ANTIALIAS)
+starting_img = Image.open("../images/profile_picture.png").resize((400, 300), Image.ANTIALIAS)
 
 if screensize[0] == 1536:
     temp_chart = Figure(figsize=(5, 5), dpi=90)
