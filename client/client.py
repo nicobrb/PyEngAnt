@@ -13,12 +13,10 @@ from GUI_client import Graphics
 from socketio import exceptions
 from multiprocessing import *
 
-# fps_enum = {1: 1000, 2: 500, 3: 330, 4: 250, 6: 166, 7: 143, 8: 125, 9: 111, 10: 100}
-# playback_rate_enum = {1: 1, 2: 0.5, 3: 0.333, 4: 0.25, 5: 0.2, 6: 0.166, 7: 0.142, 8: 0.125, 9: 0.111, 10: 0.1}
+
 DEFAULT_ENG_VALUE = 'null'
 DEFAULT_IMAGE_URI = "../static/images/profile_picture.png"  # default image into the video frame section
 DEFAULT_FPS_RATE = 10
-# DEFAULT_PLAYBACK_RATE = 10
 
 ENCODING = "utf-8"
 
@@ -130,12 +128,13 @@ def disconnect():
     """
     Evento che segue la disconnessione del client, svuota l'array dei frame e dei dati.
     """
-    global ping_timeout_counter, frame_counter, framearr, eng_data
+    global ping_timeout_counter, frame_counter, framearr, eng_data, session_id
     print("Disconnected!")
     finalize_session()
     frame_counter = 0
     framearr = []
     eng_data = {}
+    session_id = 0
     q.put(GUI.edit_log_message("INFO: Client disconnected."))
 
 
