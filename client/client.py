@@ -178,10 +178,6 @@ def finalize_session():
         print("csv done")
 
 
-def create_gui():
-    master.mainloop()
-
-
 if __name__ == "__main__":
     t1 = Process(target=try_connect(), args=(q,))
-    create_gui()
+    master.mainloop()
