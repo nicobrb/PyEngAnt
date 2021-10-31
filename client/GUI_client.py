@@ -41,6 +41,13 @@ else:
 
 
 def start_streaming(tipo_input, video_url):
+    """
+    funzione per la gestione dello streaming su GUI. In base al tipo di input deciso dall'utente, il programma
+    estrae informazioni dalla sorgente del video attraverso la funzione VideoCapture, estrae un frame ogni tot
+    (specificato dal metodo waitkey()), lo codifica in formato stringa a 64bit e lo invia al server.
+    @param tipo_input: stringa che riporta se lo streaming è da webcam o da file video
+    @param video_url: in caso di file video, stringa che riporta il percorso nel sistema
+    """
     global ENCODING, sockio, sesh_id, num_frames_sent
     vc = None
     num_frames_sent = 0
@@ -78,6 +85,13 @@ def start_streaming(tipo_input, video_url):
 
 
 def update_sio_and_sesh(sio, ses_id):
+    """
+    Riceve in input l'oggetto SocketIo inizializzato dallo script client, aggiornando l'id della sessione in modo
+    che l'oggetto GUI possa estrarre le informazioni dalle variabili globali senza contattare il processo che gestisce
+    il client.
+    @param sio: oggetto SocketIo inizializzato nel processo che esegue lo script client
+    @param ses_id: id della sessione, diverso per ogni stream che l'utente decide di inizializzare
+    """
     global sockio, sesh_id, connected
     sockio = sio
     sesh_id = ses_id
@@ -85,6 +99,12 @@ def update_sio_and_sesh(sio, ses_id):
 
 
 def start_analysis(final_input, video_url='0'):
+    """
+    La funzione si assicura che non sia già in run una analisi dell'engagement, effettua una richiesta di connessione
+    al server e fa partire un thread per la gestione dello streaming e per l'invio dei frame.
+    @param final_input: formato di input scelto dall'utente, stringa del tipo "webcam" oppure "video"
+    @param video_url: eventuale percorso nel sistema locale dell'utente per il video da analizzare
+    """
     global stopped, t1, temp_chart
     stopped = False
     if not connected:
@@ -100,6 +120,12 @@ def start_analysis(final_input, video_url='0'):
 
 
 def define(tipo_input):
+    """
+    definisce il comportamento della GUI una volta premuto uno dei due bottoni nell'interfaccia per l'inizio dello
+    streaming e dell'analisi: apre il file directory per la ricerca del percorso del file nel caso di streaming
+    da video e controlla che il formato sia corretto.
+    @param tipo_input: formato di input scelto dall'utente, stringa del tipo "webcam" oppure "video"
+    """
     global filename, input_type
     cam_video_pop.destroy()
     input_type = tipo_input
@@ -117,6 +143,16 @@ def define(tipo_input):
 
 class Graphics:
     def __init__(self, root, q):
+        """
+        costruttore dell'interfaccia grafica scritta con Tkinter. inizializza ogni oggetto grafico nell'interfaccia
+        e formalizza il bind tra bottoni/caselle e metodi annessi. Inizializza poi l'analisi della coda contenente
+        le chiamate ai metodi derivate dal processo client.
+        @param root: RootPane utile per inizializzare la finestra in cui proiettare l'interfaccia. Esso deterrà il focus
+        dell'input (mouse e tastiera) e verrà eseguito nel thread principale.
+        @param q: coda contenente i metodi utili per la comunicazione tra processi. Si ricorda che GUI e client sono
+        eseguiti su processi diversi, ergo l'unico modo per poter comunicare con l'oggetto istanza di questa classe
+        è chiamare i metodi attraverso questa coda.
+        """
         global starting_img
         self.queue = q
         self.root = root
@@ -269,6 +305,14 @@ class Graphics:
         self.root.after(2000, self.check_queue_poll, self.queue)
 
     def check_queue_poll(self, queue):
+        """
+        metodo che permette al thread principale eseguente l'oggetto istanza della classe Graphics di controllare ogni
+        20ms la coda delle chiamate. è possibile modificare l'offset nel metodo root.after().
+        Il metodo queue.get(0) esegue un POP dalla coda, secondo il criterio FIFO.
+        @param queue: coda contenente i metodi utili per la comunicazione tra processi. Si ricorda che GUI e client sono
+        eseguiti su processi diversi, ergo l'unico modo per poter comunicare con l'oggetto istanza di questa classe
+        è chiamare i metodi attraverso questa coda.
+        """
         global screensize
         try:
             queue.get(0)
@@ -282,6 +326,19 @@ class Graphics:
         self.img_canvas.image = self.default_image
 
     def update_frame_and_chart(self, latest_frame, latest_eng_value, num_frame, sessione):
+        """
+        il metodo riceve un frame, aggiorna la GUI, lo aggiunge all'array dei frame insieme ai valori di engagement
+        (utili per effettuare il rendering del video e il salvataggio nel CSV una volta terminata la sessione), poi
+        aggiorna il chart nel caso in cui il valore di engagement sia stato ricevuto/aggiornato (non avverrà prima dei
+        300 frame).
+        @param latest_frame: frame da mostrare in tempo reale
+        @param latest_eng_value: valore di engagement per il grafico e per il valore da comunicare all'utente una volta
+        terminata la sessione
+        @param num_frame: indice dei frame totali che sono stati ricevuti in questa sessione, utile per sapere ogni
+        quanto aggiornare il grafico
+        @param sessione: intero per controllare che il frame ricevuto corrisponda alla sessione che è inizializzata
+        attualmente.
+        """
         global temp_chart, sesh_id
         if not stopped and sessione == sesh_id:
             self.img_canvas.configure(image=latest_frame, anchor='center')
@@ -305,10 +362,17 @@ class Graphics:
         self.log_message.configure(text=message + ' ')
 
     def reset_aus(self):
+        """
+        resetta le progress bar nell'interfaccia
+        """
         for key in self.AUs_bars_dict:
             self.AUs_bars_dict[key]['value'] = 0
 
     def update_aus(self, eng_values):
+        """
+        aggiorna le progress bar con i parametri del volto richiesti, una volta per ogni frame
+        @param eng_values: valori reali di engagement, ovvero parametri del volto contenuti nell'intervallo [0,1]
+        """
         if not stopped:
             for key in self.AUs_bars_dict:
                 try:
@@ -324,6 +388,14 @@ class Graphics:
                     break
 
     def stop_analysis(self, from_on_close=False):
+        """
+        esegue una richiesta di disconnessione una volta che l'utente decide di terminare il processo di analisi, sia
+        in caso di terminazione naturale (attraverso il bottone "Stop Analysis") oppure di chiusura forzata
+        dell'interfaccia. Nel caso della prima, resetta l'interfaccia e inizializza una finestra popup che comunica
+        all'utente i risultati finali dell'engagement.
+        @param from_on_close: booleano per capire se il processo di analisi va fermata in caso di chiusura della
+        finestra
+        """
         global stopped, connected, input_type
         if from_on_close:
             stopped = True
@@ -354,6 +426,10 @@ class Graphics:
                 self.final_eng("Ending engagement value: " + str(round(engagement, 2)) + " -> " + eng_string)
 
     def cam_or_video(self):
+        """
+        metodo per inizializzare una finestra di popup per richiedere all'utente la sorgente della riproduzione
+        utile all'analisi.
+        """
         global cam_video_pop
         cam_video_pop = Toplevel(self.root)
         cam_video_pop.title('INPUT')
@@ -369,6 +445,10 @@ class Graphics:
         video_btn.grid(row=1, column=1, padx=10, pady=20)
 
     def final_eng(self, result_text):
+        """
+        metodo che costruisce il popup per la comunicazione dell'esito dell'engagement.
+        @param result_text: stringa di testo con esito dell'engagement.
+        """
         global eng_pop
         eng_pop = Toplevel(self.root)
         eng_pop.title('Analysis result')
@@ -386,10 +466,23 @@ class Graphics:
         return bool(self.save_video.get()), bool(self.save_CSV.get())
 
     def is_stopped_and_saveable(self):
+        """
+        il metodo non è statico perché non c'è modo di risalire ai parametri globali per sapere se la riproduzione
+        è in corso o meno, proprio per la natura multiprocess del programma (la scelta di utilizzare Python ha portato
+        a questa soluzione).
+        @return: coppia di valori, stopped è un booleano riporta se la sessione è in esecuzione o meno, num_frames_sent
+        riporta un intero con il numero totale di frames inviati, utile per coordinare il processo client con il
+        processo GUI, visto che quest'ultimo è l'addetto all'invio dei frames ma è il primo a riceverli, da qui la
+        necessità di allineare entrambi i processi sul numero di frames ricevuti.
+        """
         global stopped, num_frames_sent
         return stopped, num_frames_sent
 
     def on_closing(self):
+        """
+        gestisce il comportamento del programma alla chiusura del client attraverso terminazione del processo GUI,
+        ovvero alla chiusura della finestra.
+        """
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             if not stopped:
                 self.stop_analysis(from_on_close=True)

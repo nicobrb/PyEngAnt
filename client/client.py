@@ -86,6 +86,14 @@ def log_message(response):
 
 @sio.event(namespace=namespace)
 def output_data(data):
+    """
+    la procedura controlla inizialmente che la sessione del frame sia corrispondente a quella attiva (potrebbero esserci
+    frame in arrivo derivanti da altre sessioni ma accodate al buffer del server, non ancora elaborati). In seguito
+    riconverte il frame da stringa a 64-bit in immagine, attraverso la funzione encode, per poi modificare la GUI.
+    in seguito elabora i parametri del volto del suddetto frame e li utilizza per aggiornare le progress bar della GUI.
+    @param data: array di informazioni passato dal server, contenente i dati dell'engagement del frame ricevuto
+    e il frame modificato dalla componente EngRecApi
+    """
     global frame_counter, framearr, eng_data, session_id
     if data['open_id'] == session_id:
         try:
@@ -119,6 +127,9 @@ def connect_error():
 
 @sio.event(namespace=namespace)
 def disconnect():
+    """
+    Evento che segue la disconnessione del client, svuota l'array dei frame e dei dati.
+    """
     global ping_timeout_counter, frame_counter, framearr, eng_data
     print("Disconnected!")
     finalize_session()
@@ -129,6 +140,10 @@ def disconnect():
 
 
 def try_connect():
+    """
+    Esegue la il tentativo di connessione attraverso l'oggetto Socketio, al client inizializzato in locale.
+    Va modificato in caso di cambio dell'url o di server in remoto. Il namespace è predefinito.
+    """
     try:
         sio.connect('http://localhost:8083', namespaces=[namespace])
     except exceptions.ConnectionError as e:
@@ -136,6 +151,11 @@ def try_connect():
 
 
 def finalize_session():
+    """
+    Metodo eseguito poco prima della disconnessione del Client o della termine dell'analisi, esso rileva le spunte
+    della GUI circa l'intenzione di salvare il file CSV dei dati di engagement e il video dell'analisi. Salva il
+    tutto all'interno della cartella del progetto, nel percorso segnalato.
+    """
     global save_Video, save_CSV
     save_Video, save_CSV = GUI.save_bool_values()
     now = datetime.datetime.now()
