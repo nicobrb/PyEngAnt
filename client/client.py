@@ -15,7 +15,7 @@ from multiprocessing import *
 
 
 DEFAULT_ENG_VALUE = 'null'
-DEFAULT_IMAGE_URI = "./static/images/profile_picture.png"  # default image into the video frame section
+DEFAULT_IMAGE_URI = "../static/images/profile_picture.png"  # default image into the video frame section
 DEFAULT_FPS_RATE = 10
 
 ENCODING = "utf-8"
@@ -162,7 +162,7 @@ def finalize_session():
 
     if save_Video and len(framearr) > 0:
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter('./images/recordings/recording' + today + '.mp4', fourcc, 10.0, (500, 400))
+        out = cv2.VideoWriter('../images/recordings/recording' + today + '.mp4', fourcc, 10.0, (500, 400))
         for i in range(len(framearr)):
             out.write(cv2.cvtColor(np.array(framearr[i]), cv2.COLOR_BGR2RGB))
         out.release()
@@ -173,7 +173,7 @@ def finalize_session():
         csv_dframe['timestamp'] = csv_dframe['timestamp'].apply(
             lambda x: datetime.datetime.fromtimestamp(x).isoformat())
 
-        csv_dframe.to_csv('./images/savedCSVs/' + today + '.csv', index=True)
+        csv_dframe.to_csv('../images/savedCSVs/' + today + '.csv', index=True)
         print("csv done")
 
 
