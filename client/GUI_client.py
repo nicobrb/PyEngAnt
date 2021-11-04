@@ -411,7 +411,7 @@ class Graphics:
             self.reset_aus()
 
             if not len(self.eng_vals) > 0:
-                self.final_eng("Not much datas for analysis")
+                self.final_eng("Not much data for analysis")
             else:
                 engagement = self.eng_vals[-1]
                 if 0 < engagement <= 0.25:
